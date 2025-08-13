@@ -9,29 +9,12 @@ import seaborn as sns
 import numpy as np
 from matplotlib.colors import ListedColormap, BoundaryNorm
 
-from rename import renames
 
 ALPHABETICAL = (
     False  # Make True if you want alphabetical else it will be sorted by power rank.
 )
 
-# power rankings from passportindex.com
-with open("power_rankings.html", encoding="utf8") as file:
-    lines = file.readlines()
-
-ranked_countries = [
-    line.split("passport/")[1].split("/")[0].capitalize()
-    for line in lines
-    if line.strip() != ""  # ignore empty lines
-]
-
-corrected = []
-for country in ranked_countries:
-    if country in renames:
-        corrected.append(renames[country])
-    else:
-        corrected.append(country)
-
+countries = np.loadtxt("power_index.csv", delimiter=',', usecols=1, dtype=str)
 # Prepare csv data
 df = pd.read_csv("passport-index-matrix.csv")
 df = df.set_index("Passport")
@@ -40,9 +23,10 @@ if ALPHABETICAL:
     df = df.sort_index(axis=0)
     df = df.sort_index(axis=1)
 else:
-    df = df.reindex(corrected, axis=0)
-    df = df.reindex(corrected, axis=1)
+    df = df.reindex(countries, axis=0)
+    df = df.reindex(countries, axis=1)
 
+# No data for Vatica City.
 df = df.drop("Vatican City", axis=0, errors="ignore")
 df = df.drop("Vatican City", axis=1, errors="ignore")
 
@@ -92,7 +76,6 @@ cmap = ListedColormap(colors)
 
 bounds = np.arange(-0.5, len(categories) + 1.5, 1)
 norm = BoundaryNorm(bounds, cmap.N)
-
 
 # Plot figure
 plt.figure(figsize=(20, 18), dpi=800)
